@@ -1,0 +1,285 @@
+openapi: 3.0.0
+info:
+  title: Bulk Operations API
+  description: API for managing bulk operations on tasks
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+
+paths:
+  /api/tasks/bulk/update:
+    post:
+      summary: Bulk update tasks
+      description: Update multiple tasks with the same changes (status, category, priority)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                task_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: List of task IDs to update
+                  example: ["550e8400-e29b-41d4-a716-446655440000", "550e8400-e29b-41d4-a716-446655440001"]
+                update_type:
+                  type: string
+                  enum: [status, category, priority]
+                  description: Type of update to perform
+                params:
+                  type: object
+                  description: Parameters for the update
+                  properties:
+                    status:
+                      type: boolean
+                      description: New status for tasks (for status updates)
+                    category:
+                      type: string
+                      description: New category for tasks (for category updates)
+                    priority:
+                      type: string
+                      enum: [Low, Medium, High]
+                      description: New priority for tasks (for priority updates)
+              required:
+                - task_ids
+                - update_type
+                - params
+      responses:
+        '200':
+          description: Bulk update successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  updated_count:
+                    type: integer
+                    example: 5
+                  failed_count:
+                    type: integer
+                    example: 0
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        task_id:
+                          type: string
+                          format: uuid
+                        error:
+                          type: string
+        '400':
+          description: Invalid request data
+        '401':
+          description: Unauthorized - Invalid or missing JWT token
+        '403':
+          description: Forbidden - User cannot access these tasks
+
+  /api/tasks/bulk/delete:
+    post:
+      summary: Bulk soft-delete tasks
+      description: Move multiple tasks to trash bin (soft delete)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                task_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: List of task IDs to delete
+                  example: ["550e8400-e29b-41d4-a716-446655440000", "550e8400-e29b-41d4-a716-446655440001"]
+              required:
+                - task_ids
+      responses:
+        '200':
+          description: Bulk delete successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  deleted_count:
+                    type: integer
+                    example: 3
+                  failed_count:
+                    type: integer
+                    example: 0
+        '400':
+          description: Invalid request data
+        '401':
+          description: Unauthorized - Invalid or missing JWT token
+        '403':
+          description: Forbidden - User cannot access these tasks
+
+  /api/trash:
+    get:
+      summary: List soft-deleted tasks
+      description: Retrieve tasks that have been soft-deleted
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Limit number of results
+          required: false
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          description: Offset for pagination
+          required: false
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of soft-deleted tasks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trash_items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TrashBin'
+                  total:
+                    type: integer
+        '401':
+          description: Unauthorized - Invalid or missing JWT token
+
+  /api/trash/restore:
+    post:
+      summary: Restore soft-deleted tasks
+      description: Restore one or more tasks from the trash bin
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                task_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: List of task IDs to restore
+                  example: ["550e8400-e29b-41d4-a716-446655440000"]
+              required:
+                - task_ids
+      responses:
+        '200':
+          description: Restore successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  restored_count:
+                    type: integer
+                    example: 2
+                  failed_count:
+                    type: integer
+                    example: 0
+        '400':
+          description: Invalid request data
+        '401':
+          description: Unauthorized - Invalid or missing JWT token
+        '403':
+          description: Forbidden - User cannot restore these tasks
+
+  /api/trash/cleanup:
+    delete:
+      summary: Permanently delete old trash items
+      description: Remove trash items that are past their retention period
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: older_than_days
+          in: query
+          description: Delete items older than this many days (default: 30)
+          required: false
+          schema:
+            type: integer
+            default: 30
+      responses:
+        '200':
+          description: Cleanup successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  purged_count:
+                    type: integer
+                    example: 5
+        '401':
+          description: Unauthorized - Invalid or missing JWT token
+        '403':
+          description: Forbidden - User cannot perform cleanup
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    TrashBin:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the trash bin entry
+        original_task_data:
+          type: object
+          description: Serialized copy of the original task
+        task_id:
+          type: string
+          format: uuid
+          description: Original ID of the deleted task
+        user_id:
+          type: string
+          format: uuid
+          description: Reference to the user who owned the task
+        deleted_at:
+          type: string
+          format: date-time
+          description: Timestamp when task was soft-deleted
+        scheduled_purge_at:
+          type: string
+          format: date-time
+          description: Timestamp when task will be permanently purged
+        is_restored:
+          type: boolean
+          description: Whether the task has been restored

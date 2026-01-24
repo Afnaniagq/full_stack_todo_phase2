@@ -1,0 +1,318 @@
+openapi: 3.0.0
+info:
+  title: Task Management API
+  description: API for managing user tasks with priority, category, and completion status
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+
+paths:
+  /api/tasks:
+    get:
+      summary: List user's tasks
+      description: Retrieve a list of tasks belonging to the authenticated user
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: priority
+          in: query
+          description: Filter tasks by priority (Low, Medium, High)
+          required: false
+          schema:
+            type: string
+            enum: [Low, Medium, High]
+        - name: category
+          in: query
+          description: Filter tasks by category
+          required: false
+          schema:
+            type: string
+        - name: is_completed
+          in: query
+          description: Filter tasks by completion status
+          required: false
+          schema:
+            type: boolean
+        - name: limit
+          in: query
+          description: Limit number of results
+          required: false
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          description: Offset for pagination
+          required: false
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of tasks for the authenticated user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+                  total:
+                    type: integer
+                  offset:
+                    type: integer
+        '401':
+          description: Unauthorized - Invalid or missing JWT token
+        '403':
+          description: Forbidden - User cannot access these tasks
+    post:
+      summary: Create a new task
+      description: Create a new task for the authenticated user
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Invalid request data
+        '401':
+          description: Unauthorized - Invalid or missing JWT token
+
+  /api/tasks/{id}:
+    get:
+      summary: Get a specific task
+      description: Retrieve a specific task by ID for the authenticated user
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '401':
+          description: Unauthorized - Invalid or missing JWT token
+        '403':
+          description: Forbidden - User cannot access this task
+        '404':
+          description: Task not found
+    put:
+      summary: Update a task
+      description: Update an existing task for the authenticated user
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdate'
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Invalid request data
+        '401':
+          description: Unauthorized - Invalid or missing JWT token
+        '403':
+          description: Forbidden - User cannot access this task
+        '404':
+          description: Task not found
+    delete:
+      summary: Delete a task
+      description: Soft-delete a task for the authenticated user
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Task deleted successfully
+        '401':
+          description: Unauthorized - Invalid or missing JWT token
+        '403':
+          description: Forbidden - User cannot access this task
+        '404':
+          description: Task not found
+
+  /api/tasks/{id}/toggle:
+    patch:
+      summary: Toggle task completion status
+      description: Toggle the completion status of a task for the authenticated user
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Task ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task completion status toggled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '401':
+          description: Unauthorized - Invalid or missing JWT token
+        '403':
+          description: Forbidden - User cannot access this task
+        '404':
+          description: Task not found
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Task:
+      type: object
+      required:
+        - id
+        - title
+        - priority
+        - user_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the task
+        title:
+          type: string
+          maxLength: 255
+          description: Title of the task
+        description:
+          type: string
+          description: Detailed description of the task
+        priority:
+          type: string
+          enum: [Low, Medium, High]
+          description: Priority level of the task
+        category:
+          type: string
+          maxLength: 100
+          description: Category for organizing tasks
+        due_date:
+          type: string
+          format: date-time
+          description: Deadline for the task
+        is_completed:
+          type: boolean
+          description: Whether the task is completed
+        user_id:
+          type: string
+          format: uuid
+          description: Reference to the owning user
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when task was created
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when task was last updated
+        deleted_at:
+          type: string
+          format: date-time
+          description: Timestamp when task was soft-deleted (if applicable)
+    TaskCreate:
+      type: object
+      required:
+        - title
+        - priority
+      properties:
+        title:
+          type: string
+          maxLength: 255
+          description: Title of the task
+        description:
+          type: string
+          description: Detailed description of the task
+        priority:
+          type: string
+          enum: [Low, Medium, High]
+          description: Priority level of the task
+        category:
+          type: string
+          maxLength: 100
+          description: Category for organizing tasks
+        due_date:
+          type: string
+          format: date-time
+          description: Deadline for the task
+        is_completed:
+          type: boolean
+          default: false
+          description: Whether the task is completed
+    TaskUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 255
+          description: Title of the task
+        description:
+          type: string
+          description: Detailed description of the task
+        priority:
+          type: string
+          enum: [Low, Medium, High]
+          description: Priority level of the task
+        category:
+          type: string
+          maxLength: 100
+          description: Category for organizing tasks
+        due_date:
+          type: string
+          format: date-time
+          description: Deadline for the task
+        is_completed:
+          type: boolean
+          description: Whether the task is completed

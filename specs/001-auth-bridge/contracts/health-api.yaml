@@ -1,0 +1,61 @@
+openapi: 3.0.0
+info:
+  title: Health Check API
+  description: API for checking the health status of the authentication bridge system
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+
+paths:
+  /api/health:
+    get:
+      summary: Check system health status
+      description: Returns 200 OK only when database connectivity and SSL are active
+      responses:
+        '200':
+          description: System is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy]
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2026-01-10T10:00:00Z"
+                  services:
+                    type: object
+                    properties:
+                      database:
+                        type: string
+                        enum: [connected]
+                        example: connected
+                      ssl:
+                        type: string
+                        enum: [active]
+                        example: active
+        '503':
+          description: System is unhealthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [unhealthy]
+                    example: unhealthy
+                  error:
+                    type: string
+                    example: "Database connection failed"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2026-01-10T10:00:00Z"
+
+security: []  # Health check endpoint is publicly accessible
