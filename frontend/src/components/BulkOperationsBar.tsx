@@ -4,14 +4,12 @@ import BulkOperationService from '@/services/bulk_operation_service';
 
 interface BulkOperationsBarProps {
   selectedTaskIds: string[];
-  onSelectionChange: (ids: string[]) => void;
   onBulkOperationComplete: () => void;
   onCancelSelection: () => void;
 }
 
 const BulkOperationsBar: React.FC<BulkOperationsBarProps> = ({
   selectedTaskIds,
-  onSelectionChange,
   onBulkOperationComplete,
   onCancelSelection
 }) => {

@@ -1,4 +1,4 @@
-import { authClient } from '@/lib/auth';
+import { apiClient } from './auth';
 
 interface BulkUpdateParams {
   status?: boolean;
@@ -33,19 +33,8 @@ class BulkOperationService {
    */
   static async bulkUpdate(request: BulkUpdateRequest): Promise<BulkOperationResponse> {
     try {
-      const response = await authClient.api('/api/tasks/bulk/update', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(request),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Bulk update failed: ${response.statusText}`);
-      }
-
-      return await response.json();
+      const response = await apiClient.post('/tasks/bulk/update', request);
+      return response.data;
     } catch (error) {
       console.error('Bulk update error:', error);
       throw error;
@@ -57,19 +46,8 @@ class BulkOperationService {
    */
   static async bulkDelete(request: BulkDeleteRequest): Promise<BulkOperationResponse> {
     try {
-      const response = await authClient.api('/api/tasks/bulk/delete', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(request),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Bulk delete failed: ${response.statusText}`);
-      }
-
-      return await response.json();
+      const response = await apiClient.post('/tasks/bulk/delete', request);
+      return response.data;
     } catch (error) {
       console.error('Bulk delete error:', error);
       throw error;

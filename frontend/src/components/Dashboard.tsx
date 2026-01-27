@@ -185,7 +185,7 @@ const Dashboard: React.FC = () => {
                 id="filter-priority"
                 className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
                 defaultValue=""
-                onChange={(e) => setFilters({...filters, priority: e.target.value || undefined})}
+                onChange={(e) => setFilters({...filters, priority: (e.target.value as 'Low' | 'Medium' | 'High') || undefined})}
               >
                 <option value="">All Priorities</option>
                 <option value="Low">Low</option>
@@ -303,7 +303,6 @@ const Dashboard: React.FC = () => {
       {/* Bulk Operations Bar */}
       <BulkOperationsBar
         selectedTaskIds={selectedIds}
-        onSelectionChange={toggleSelection}
         onBulkOperationComplete={() => {
           // Refresh stats and task list after bulk operation
           setTimeout(async () => {

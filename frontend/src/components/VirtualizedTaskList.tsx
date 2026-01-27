@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { FixedSizeList as List } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import TaskItem from './TaskItem';
+import TaskCard from './TaskCard';
 import { Task } from '@/types/task';
 import useBulkSelection from '@/hooks/useBulkSelection';
 
@@ -25,9 +25,9 @@ const VirtualizedTaskList: React.FC<VirtualizedTaskListProps> = ({
 
     return (
       <div style={style}>
-        <TaskItem
+        <TaskCard
           task={task}
-          onToggle={onTaskToggle}
+          onUpdate={(updatedTask) => onTaskToggle(updatedTask.id, updatedTask.is_completed)}
           onDelete={onTaskDelete}
           isSelected={selectedTaskIds.includes(task.id)}
           onSelectionChange={onSelectionChange}
