@@ -33,7 +33,7 @@ class BulkOperationService {
    */
   static async bulkUpdate(request: BulkUpdateRequest): Promise<BulkOperationResponse> {
     try {
-      const response = await apiClient.post('/tasks/bulk/update', request);
+      const response = await apiClient.post('/tasks/bulk/update/', request);
       return response.data;
     } catch (error) {
       console.error('Bulk update error:', error);
@@ -46,7 +46,7 @@ class BulkOperationService {
    */
   static async bulkDelete(request: BulkDeleteRequest): Promise<BulkOperationResponse> {
     try {
-      const response = await apiClient.post('/tasks/bulk/delete', request);
+      const response = await apiClient.post('/tasks/bulk/delete/', request);
       return response.data;
     } catch (error) {
       console.error('Bulk delete error:', error);
